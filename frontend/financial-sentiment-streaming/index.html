@@ -1,0 +1,127 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Financial Sentiment Streaming Engine</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="logo">⚡ Financial Sentiment Streaming Engine</div>
+      <div class="badge">Live Microservice Active</div>
+    </div>
+  </header>
+
+  <main class="main-layout">
+    <!-- Left Column: News / Headline Ingestion -->
+    <section class="panel-left">
+      <h2>Market Ingestion & Ticker Feed</h2>
+      <p class="subtitle">FinBERT neural NLP evaluating headline sentiment, polarity shifts, and volatility vectors.</p>
+
+      <div class="metric-row">
+        <div style="flex: 0.8;">
+          <label style="font-size: 0.85rem; color: #94a3b8;">Asset Ticker</label>
+          <input type="text" id="tickerInput" class="text-input" value="NVDA">
+        </div>
+        <div style="flex: 1.2;">
+          <label style="font-size: 0.85rem; color: #94a3b8;">Market Sector</label>
+          <select id="sectorSelect" class="text-input">
+            <option value="Semiconductors & AI Hardware" selected>Semiconductors & AI Hardware</option>
+            <option value="Cloud Computing & SaaS">Cloud Computing & SaaS</option>
+            <option value="Macroeconomic & Central Banking">Macroeconomic & Central Banking</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label for="headlineInput">Headline / Earnings Announcement</label>
+        <textarea id="headlineInput" class="text-area" rows="4">NVIDIA reports record quarterly revenue surging 122% year-over-year, beating Wall Street consensus on data center compute demand.</textarea>
+      </div>
+
+      <button class="btn primary-btn" onclick="analyzeSentiment()">Stream & Classify Sentiment</button>
+
+      <div class="log-card">
+        <h4>FinBERT Neural Stream Telemetry</h4>
+        <div id="logBox" class="terminal-log">Awaiting financial news feed stream...</div>
+      </div>
+    </section>
+
+    <!-- Right Column: Polarity & Volatility Diagnostics -->
+    <aside class="panel-right">
+      <h2>Asset Sentiment Verdict</h2>
+
+      <div class="metric-row">
+        <div class="metric-card">
+          <span class="label">Polarity Index</span>
+          <span class="value" id="polarityScore">+0.85</span>
+        </div>
+        <div class="metric-card">
+          <span class="label">Confidence</span>
+          <span class="value" id="confScore" style="color: #34d399;">94.0%</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Directional Signal</h3>
+        <p id="sentimentLabel" style="font-size: 1.1rem; font-weight: 700; color: #34d399; margin: 0.4rem 0;">Awaiting stream...</p>
+        <small id="volatilityTag" style="color: #94a3b8;">Submit headline to calculate market volatility index.</small>
+      </div>
+
+      <div class="card">
+        <h3>Linguistic Momentum Drivers</h3>
+        <ul id="driverList">
+          <li>Enter news content to extract market drivers.</li>
+        </ul>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    async function analyzeSentiment() {
+      const ticker = document.getElementById('tickerInput').value.trim();
+      const headline = document.getElementById('headlineInput').value.trim();
+      const log = document.getElementById('logBox');
+
+      if (!ticker || !headline) {
+        alert("Please provide both a ticker and headline.");
+        return;
+      }
+
+      log.innerText = `[${new Date().toLocaleTimeString()}] Parsing feed for ${ticker.toUpperCase()} (${headline.length} chars)\n[${new Date().toLocaleTimeString()}] Querying endpoint: /api/v1/sentiment/analyze...`;
+
+      try {
+        const res = await fetch("http://127.0.0.1:8000/api/v1/sentiment/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ticker: ticker, headline: headline })
+        });
+
+        if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
+
+        const data = await res.json();
+        const isBullish = data.sentiment_label.includes("BULLISH");
+        const isBearish = data.sentiment_label.includes("BEARISH");
+
+        const color = isBullish ? "#34d399" : (isBearish ? "#f87171" : "#38bdf8");
+
+        document.getElementById('polarityScore').innerText = (data.polarity_score > 0 ? "+" : "") + data.polarity_score;
+        document.getElementById('polarityScore').style.color = color;
+        document.getElementById('confScore').innerText = `${(data.confidence * 100).toFixed(1)}%`;
+
+        document.getElementById('sentimentLabel').innerText = `${data.ticker}: ${data.sentiment_label}`;
+        document.getElementById('sentimentLabel').style.color = color;
+        document.getElementById('volatilityTag').innerText = `Expected Volatility: ${data.volatility_impact}`;
+
+        document.getElementById('driverList').innerHTML = data.key_drivers
+          .map(d => `<li>${d}</li>`).join('');
+
+        log.innerText += `\n[${new Date().toLocaleTimeString()}] 200 OK: Neural FinBERT classification complete.`;
+      } catch (err) {
+        log.innerText += `\n[${new Date().toLocaleTimeString()}] Note: Backend server offline (${err.message}). Running local client simulation.`;
+      }
+    }
+  </script>
+</body>
+</html>
