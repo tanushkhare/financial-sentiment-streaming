@@ -1,29 +1,45 @@
 ﻿from typing import Dict, Any, List
-import math
 
-class FinancialSentimentEngine:
+class FinancialSentimentService:
     def __init__(self):
-        self.bullish_keywords = ["soars", "record", "growth", "outperform", "dividend", "surge", "beats", "rally", "profit"]
-        self.bearish_keywords = ["plunges", "missed", "layoffs", "downgrade", "losses", "recession", "drop", "investigation", "decline"]
+        self.bullish_keywords = ["surge", "jump", "record", "growth", "beat", "profit", "bullish", "rally", "exceed", "upgrade", "gain", "revenue"]
+        self.bearish_keywords = ["drop", "fall", "plunge", "loss", "miss", "recession", "bearish", "inflation", "risk", "downgrade", "deficit", "slump"]
 
-    def score_headline(self, ticker: str, headline: str) -> Dict[str, Any]:
+    def evaluate_sentiment(self, ticker: str, headline: str) -> Dict[str, Any]:
         text_lower = headline.lower()
-        bull_hits = sum(1 for k in self.bullish_keywords if k in text_lower)
-        bear_hits = sum(1 for k in self.bearish_keywords if k in text_lower)
+        bullish_hits = [w for w in self.bullish_keywords if w in text_lower]
+        bearish_hits = [w for w in self.bearish_keywords if w in text_lower]
+
+        b_score = len(bullish_hits)
+        r_score = len(bearish_hits)
         
-        raw_score = (bull_hits - bear_hits) / max(bull_hits + bear_hits, 1)
-        sentiment_score = round(math.tanh(raw_score * 1.5), 3)
-        
-        label = "BULLISH" if sentiment_score > 0.15 else "BEARISH" if sentiment_score < -0.15 else "NEUTRAL"
-        confidence = round(abs(sentiment_score) if label != "NEUTRAL" else 0.70, 3)
-        
+        if b_score > r_score:
+            label = "BULLISH"
+            polarity = round(min(0.95, 0.4 + (b_score * 0.2)), 2)
+            confidence = round(min(0.98, 0.65 + (b_score * 0.1)), 2)
+            impact = "High Upside Volatility" if b_score >= 2 else "Moderate Bullish Drift"
+            drivers = [f"Bullish catalyst: '{w}'" for w in bullish_hits]
+        elif r_score > b_score:
+            label = "BEARISH"
+            polarity = round(max(-0.95, -0.4 - (r_score * 0.2)), 2)
+            confidence = round(min(0.98, 0.65 + (r_score * 0.1)), 2)
+            impact = "Downside Risk Exposure" if r_score >= 2 else "Mild Bearish Pressure"
+            drivers = [f"Risk indicator: '{w}'" for w in bearish_hits]
+        else:
+            label = "NEUTRAL"
+            polarity = 0.05
+            confidence = 0.72
+            impact = "Low Market Impact / Consolidation"
+            drivers = ["Balanced macroeconomic signals"]
+
         return {
             "ticker": ticker.upper(),
             "headline": headline,
             "sentiment_label": label,
-            "sentiment_score": sentiment_score,
+            "polarity_score": polarity,
             "confidence": confidence,
-            "trading_signal": "BUY / ACCUMULATE" if label == "BULLISH" else "SELL / HEDGE" if label == "BEARISH" else "HOLD"
+            "volatility_impact": impact,
+            "key_drivers": drivers
         }
 
-sentiment_engine = FinancialSentimentEngine()
+sentiment_service = FinancialSentimentService()

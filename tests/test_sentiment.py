@@ -10,17 +10,17 @@ def test_health():
     assert res.json()["status"] == "healthy"
 
 def test_bullish_sentiment():
-    payload = {"ticker": "NVDA", "headline": "Nvidia reports record revenue and beats quarterly earnings estimates."}
+    payload = {"ticker": "AAPL", "headline": "Apple reports record revenue growth and profits surge."}
     res = client.post("/api/v1/sentiment/analyze", json=payload)
     assert res.status_code == 200
     data = res.json()
     assert data["sentiment_label"] == "BULLISH"
-    assert data["compound_score"] > 0.0
+    assert data["polarity_score"] > 0
 
 def test_bearish_sentiment():
-    payload = {"ticker": "XYZ", "headline": "Company faces regulatory probe as revenue declined sharply after missed estimates."}
+    payload = {"ticker": "TSLA", "headline": "Tesla experiences sudden drop in deliveries amid recession fears."}
     res = client.post("/api/v1/sentiment/analyze", json=payload)
     assert res.status_code == 200
     data = res.json()
     assert data["sentiment_label"] == "BEARISH"
-    assert data["compound_score"] < 0.0
+    assert data["polarity_score"] < 0

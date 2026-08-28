@@ -4,8 +4,8 @@ from backend.app.routers import sentiment_router
 import uvicorn
 
 app = FastAPI(
-    title="Financial Sentiment Streaming Engine API",
-    description="Real-time FinBERT neural sentiment classification, asset risk scoring, and streaming telemetry.",
+    title="Financial Sentiment Streaming API",
+    description="Real-time equity market sentiment extraction and volatility scoring engine.",
     version="1.0.0"
 )
 
@@ -20,8 +20,8 @@ app.add_middleware(
 app.include_router(sentiment_router.router)
 
 @app.get("/health")
-async def health():
-    return {"status": "healthy", "service": "financial-sentiment-streaming", "model": "FinBERT / Calibrated Lexicon"}
+async def health_check():
+    return {"status": "healthy", "service": "financial-sentiment-streaming"}
 
 if __name__ == "__main__":
     uvicorn.run("backend.main:app", host="0.0.0.0", port=8000, reload=True)
